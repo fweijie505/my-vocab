@@ -1,49 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>词条库管理</title>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; display: flex; justify-content: center; padding-top: 30px; margin: 0; min-height: 100vh; }
+        .container { width: 90%; max-width: 450px; background-color: #1e1e1e; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #fff; margin-top: 0; }
+        input { width: 100%; padding: 10px; margin-bottom: 8px; box-sizing: border-box; background-color: #2c2c2c; border: 1px solid #444; color: white; border-radius: 6px; outline: none; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        ul { list-style: none; padding: 0; margin-top: 20px; }
+        li { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .tag { font-size: 0.75rem; background: #444; padding: 2px 6px; border-radius: 4px; color: #aaa; margin-right: 8px; }
+        .del-btn { color: #ff5555; cursor: pointer; font-size: 0.8rem; margin-left: 10px; }
+    </style>
 </head>
 <body>
+
+<div class="container">
     <h2>词条记录器</h2>
-    <input type="text" id="vocabInput" placeholder="输入词条...">
-    <button onclick="saveData()">保存</button>
+    <input type="text" id="catInput" placeholder="分类 (如：技术)">
+    <input type="text" id="vocabInput" placeholder="输入词条内容...">
+    <button onclick="saveData()">保存词条</button>
     <ul id="vocabList"></ul>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // 这里粘贴你从 Firebase 获取的配置
-       const firebaseConfig = {
-  apiKey: "AIzaSyDyu8J1FCzQKlmQiC4WAPeAnHdkfqzE2tQ",
-  authDomain: "my-vocab-store.firebaseapp.com",
-  databaseURL: "https://my-vocab-store-default-rtdb.firebaseio.com",
-  projectId: "my-vocab-store",
-  storageBucket: "my-vocab-store.firebasestorage.app",
-  messagingSenderId: "259296089018",
-  appId: "1:259296089018:web:e8fd9a841348874ae28383",
-  measurementId: "G-W57LFQ21ZK"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyu8J1FCzQKlmQiC4WAPeAnHdkfqzE2tQ",
+      authDomain: "my-vocab-store.firebaseapp.com",
+      databaseURL: "https://my-vocab-store-default-rtdb.firebaseio.com",
+      projectId: "my-vocab-store",
+      storageBucket: "my-vocab-store.firebasestorage.app",
+      messagingSenderId: "259296089018",
+      appId: "1:259296089018:web:e8fd9a841348874ae28383",
+      measurementId: "G-W57LFQ21ZK"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        // 保存数据到 Firebase
-        window.saveData = () => {
-            const val = document.getElementById("vocabInput").value;
-            push(ref(db, 'vocab'), { text: val });
-        };
+    // 保存数据
+    window.saveData = () => {
+        const cat = document.getElementById("catInput").value || "未分类";
+        const val = document.getElementById("vocabInput").value;
+        if (val.trim() === "") return;
+        push(ref(db, 'vocab'), { cat, text: val });
+        document.getElementById("vocabInput").value = "";
+    };
 
-        // 实时读取数据
-        onValue(ref(db, 'vocab'), (snapshot) => {
-            const list = document.getElementById("vocabList");
-            list.innerHTML = ""; // 清空列表
-            snapshot.forEach((child) => {
-                const li = document.createElement("li");
-                li.innerText = child.val().text;
-                list.appendChild(li);
-            });
+    // 删除数据
+    window.deleteData = (id) => {
+        remove(ref(db, 'vocab/' + id));
+    };
+
+    // 实时读取
+    onValue(ref(db, 'vocab'), (snapshot) => {
+        const list = document.getElementById("vocabList");
+        list.innerHTML = "";
+        snapshot.forEach((child) => {
+            const data = child.val();
+            const li = document.createElement("li");
+            li.innerHTML = `<span><span class="tag">${data.cat}</span>${data.text}</span>
+                            <span class="del-btn" onclick="deleteData('${child.key}')">[删除]</span>`;
+            list.appendChild(li);
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>
