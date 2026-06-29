@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>词条库管理</title>
+</head>
+<body>
+    <h2>词条记录器</h2>
+    <input type="text" id="vocabInput" placeholder="输入词条...">
+    <button onclick="saveData()">保存</button>
+    <ul id="vocabList"></ul>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // 这里粘贴你从 Firebase 获取的配置
+       const firebaseConfig = {
+  apiKey: "AIzaSyDyu8J1FCzQKlmQiC4WAPeAnHdkfqzE2tQ",
+  authDomain: "my-vocab-store.firebaseapp.com",
+  databaseURL: "https://my-vocab-store-default-rtdb.firebaseio.com",
+  projectId: "my-vocab-store",
+  storageBucket: "my-vocab-store.firebasestorage.app",
+  messagingSenderId: "259296089018",
+  appId: "1:259296089018:web:e8fd9a841348874ae28383",
+  measurementId: "G-W57LFQ21ZK"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 保存数据到 Firebase
+        window.saveData = () => {
+            const val = document.getElementById("vocabInput").value;
+            push(ref(db, 'vocab'), { text: val });
+        };
+
+        // 实时读取数据
+        onValue(ref(db, 'vocab'), (snapshot) => {
+            const list = document.getElementById("vocabList");
+            list.innerHTML = ""; // 清空列表
+            snapshot.forEach((child) => {
+                const li = document.createElement("li");
+                li.innerText = child.val().text;
+                list.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
